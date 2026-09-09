@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SQL Agent — a polished dark-mode conversational SQL workspace prototype."
+    />
+    <title>SQL Agent — Ask your data</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #07090d;
+        --sidebar: #0a0d12;
+        --surface: #0f131a;
+        --surface-raised: #151a23;
+        --surface-soft: #11161e;
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.13);
+        --text: #f4f7fb;
+        --text-soft: #a4adba;
+        --text-faint: #6f7887;
+        --accent: #70e1f5;
+        --accent-strong: #54cfe8;
+        --violet: #9b8afb;
+        --success: #66d9a5;
+        --danger: #ff8b8b;
+        --sidebar-width: 264px;
+        --content-width: 860px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: var(--canvas);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      button:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid rgba(112, 225, 245, 0.75);
+        outline-offset: 2px;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        height: 100dvh;
+        background:
+          radial-gradient(circle at 62% -18%, rgba(112, 225, 245, 0.07), transparent 34%),
+          radial-gradient(circle at 105% 62%, rgba(155, 138, 251, 0.05), transparent 32%),
+          var(--canvas);
+      }
+
+      .sidebar {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        padding: 20px 14px 16px;
+        border-right: 1px solid var(--line);
+        background: rgba(10, 13, 18, 0.88);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 0 10px 22px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid rgba(112, 225, 245, 0.28);
+        border-radius: 11px;
+        background: linear-gradient(145deg, rgba(112, 225, 245, 0.18), rgba(155, 138, 251, 0.08));
+        color: var(--accent);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .brand-name {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .brand-badge {
+        margin-left: auto;
+        padding: 3px 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--text-faint);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      .new-chat,
+      .side-item,
+      .profile,
+      .icon-button,
+      .suggestion,
+      .copy-button,
+      .send-button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .new-chat {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--line-strong);
+        border-radius: 11px;
+        background: var(--surface-raised);
+        font-size: 13px;
+        font-weight: 650;
+        transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+
+      .new-chat:hover {
+        border-color: rgba(112, 225, 245, 0.3);
+        background: #191f29;
+        transform: translateY(-1px);
+      }
+
+      .sidebar-section {
+        margin-top: 24px;
+      }
+
+      .sidebar-label {
+        margin: 0 10px 8px;
+        color: var(--text-faint);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .side-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text-soft);
+        font-size: 12.5px;
+        text-align: left;
+        transition: background 160ms ease, color 160ms ease;
+      }
+
+      .side-item:hover {
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text);
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        margin-left: auto;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 0 4px rgba(102, 217, 165, 0.09);
+      }
+
+      .recent-list {
+        display: grid;
+        gap: 2px;
+      }
+
+      .sidebar-spacer {
+        flex: 1;
+      }
+
+      .profile {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 9px;
+        border-radius: 11px;
+        background: transparent;
+        text-align: left;
+      }
+
+      .profile:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .avatar {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border: 1px solid rgba(155, 138, 251, 0.34);
+        border-radius: 9px;
+        background: rgba(155, 138, 251, 0.12);
+        color: #c7beff;
+        font-size: 11px;
+        font-weight: 750;
+      }
+
+      .profile-copy {
+        min-width: 0;
+      }
+
+      .profile-copy strong,
+      .profile-copy span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .profile-copy strong {
+        font-size: 11.5px;
+        font-weight: 650;
+      }
+
+      .profile-copy span {
+        margin-top: 2px;
+        color: var(--text-faint);
+        font-size: 10px;
+      }
+
+      .workspace {
+        display: grid;
+        min-width: 0;
+        min-height: 0;
+        grid-template-rows: 64px minmax(0, 1fr);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(7, 9, 13, 0.7);
+        backdrop-filter: blur(16px);
+      }
+
+      .mobile-menu {
+        display: none;
+      }
+
+      .conversation-title {
+        min-width: 0;
+      }
+
+      .conversation-title strong {
+        display: block;
+        overflow: hidden;
+        font-size: 13px;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conversation-title span {
+        display: block;
+        margin-top: 3px;
+        color: var(--text-faint);
+        font-size: 10px;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      .connection-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 30px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.025);
+        color: var(--text-soft);
+        font-size: 10.5px;
+      }
+
+      .connection-pill .status-dot {
+        width: 6px;
+        height: 6px;
+        margin: 0;
+        box-shadow: none;
+      }
+
+      .icon-button {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text-soft);
+        transition: background 160ms ease, color 160ms ease;
+      }
+
+      .icon-button:hover {
+        background: var(--surface-raised);
+        color: var(--text);
+      }
+
+      .chat-stage {
+        position: relative;
+        display: grid;
+        min-height: 0;
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+
+      .scroll-area {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+        scrollbar-width: thin;
+      }
+
+      .empty-state {
+        display: flex;
+        min-height: 100%;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px 32px;
+      }
+
+      .empty-state[hidden],
+      .messages[hidden] {
+        display: none;
+      }
+
+      .hero {
+        width: min(100%, 720px);
+        margin-top: -24px;
+        text-align: center;
+      }
+
+      .hero-visual {
+        position: relative;
+        display: grid;
+        width: 124px;
+        height: 124px;
+        margin: 0 auto 25px;
+        place-items: center;
+      }
+
+      .hero-glow {
+        position: absolute;
+        inset: 5px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(112, 225, 245, 0.18), transparent 68%);
+        filter: blur(9px);
+      }
+
+      .orbit {
+        position: absolute;
+        inset: 10px;
+        border: 1px solid rgba(112, 225, 245, 0.2);
+        border-radius: 50%;
+        animation: spin 16s linear infinite;
+      }
+
+      .orbit::before,
+      .orbit::after {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 14px rgba(112, 225, 245, 0.9);
+        content: "";
+      }
+
+      .orbit::before {
+        top: 8px;
+        left: 17px;
+      }
+
+      .orbit::after {
+        right: 5px;
+        bottom: 23px;
+        width: 4px;
+        height: 4px;
+        background: var(--violet);
+      }
+
+      .database-visual {
+        position: relative;
+        display: grid;
+        width: 76px;
+        height: 76px;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        background: linear-gradient(145deg, rgba(21, 26, 35, 0.95), rgba(11, 15, 21, 0.98));
+        color: var(--accent);
+        box-shadow:
+          0 24px 50px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .spark {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        color: #d0caff;
+        filter: drop-shadow(0 0 7px rgba(155, 138, 251, 0.65));
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 12px;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 18px;
+        height: 1px;
+        background: currentColor;
+        content: "";
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 44px);
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 1.08;
+      }
+
+      .gradient-text {
+        background: linear-gradient(110deg, #ffffff 18%, #9ae9f7 56%, #b9afff 92%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .hero-description {
+        max-width: 520px;
+        margin: 14px auto 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .suggestions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 34px;
+      }
+
+      .suggestion {
+        min-height: 92px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(15, 19, 26, 0.7);
+        text-align: left;
+        transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+      }
+
+      .suggestion:hover {
+        border-color: rgba(112, 225, 245, 0.25);
+        background: var(--surface-raised);
+        transform: translateY(-2px);
+      }
+
+      .suggestion-icon {
+        display: grid;
+        width: 26px;
+        height: 26px;
+        margin-bottom: 10px;
+        place-items: center;
+        border-radius: 8px;
+        background: rgba(112, 225, 245, 0.08);
+        color: var(--accent);
+      }
+
+      .suggestion:nth-child(2) .suggestion-icon {
+        background: rgba(155, 138, 251, 0.1);
+        color: #b8adff;
+      }
+
+      .suggestion:nth-child(3) .suggestion-icon {
+        background: rgba(102, 217, 165, 0.09);
+        color: var(--success);
+      }
+
+      .suggestion strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 11.5px;
+        font-weight: 650;
+      }
+
+      .suggestion span {
+        display: block;
+        color: var(--text-faint);
+        font-size: 10.5px;
+        line-height: 1.45;
+      }
+
+      .messages {
+        width: min(100%, var(--content-width));
+        margin: 0 auto;
+        padding: 44px 24px 24px;
+      }
+
+      .message-row {
+        display: flex;
+        gap: 11px;
+        width: 100%;
+        margin-bottom: 28px;
+        animation: message-in 260ms ease both;
+      }
+
+      .message-row.user {
+        justify-content: flex-end;
+      }
+
+      .message-avatar {
+        display: grid;
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        margin-top: 2px;
+        place-items: center;
+        border: 1px solid rgba(112, 225, 245, 0.2);
+        border-radius: 9px;
+        background: rgba(112, 225, 245, 0.08);
+        color: var(--accent);
+      }
+
+      .message-content {
+        min-width: 0;
+        max-width: min(680px, calc(100% - 44px));
+      }
+
+      .message-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 7px;
+        color: var(--text-faint);
+        font-size: 10px;
+      }
+
+      .message-meta strong {
+        color: var(--text-soft);
+        font-weight: 650;
+      }
+
+      .user .message-meta {
+        justify-content: flex-end;
+      }
+
+      .message-bubble {
+        border: 1px solid var(--line);
+        border-radius: 5px 16px 16px 16px;
+        background: rgba(15, 19, 26, 0.84);
+        color: #d9dee7;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .assistant .message-bubble {
+        padding: 14px 16px;
+      }
+
+      .user .message-bubble {
+        max-width: 520px;
+        padding: 11px 15px;
+        border-color: rgba(112, 225, 245, 0.19);
+        border-radius: 16px 5px 16px 16px;
+        background: linear-gradient(145deg, rgba(38, 89, 102, 0.54), rgba(25, 55, 68, 0.66));
+        color: #f1fbfd;
+      }
+
+      .message-bubble p {
+        margin: 0;
+      }
+
+      .message-bubble p + p {
+        margin-top: 10px;
+      }
+
+      .sql-block {
+        overflow: hidden;
+        margin: 13px 0;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: #090c11;
+      }
+
+      .sql-header {
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        color: var(--text-faint);
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .copy-button {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto;
+        padding: 4px 6px;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-faint);
+        font-size: 9px;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .copy-button:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-soft);
+      }
+
+      pre {
+        margin: 0;
+        overflow-x: auto;
+        padding: 13px;
+        color: #d7dde8;
+        font: 11.5px/1.7 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      .sql-keyword { color: #c4b9ff; }
+      .sql-column { color: #8fe6f5; }
+      .sql-string { color: #86dda9; }
+
+      .result-card {
+        overflow: hidden;
+        margin-top: 13px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+      }
+
+      .result-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--line);
+        color: var(--text-soft);
+        font-size: 10px;
+        font-weight: 650;
+      }
+
+      .result-head span:last-child {
+        margin-left: auto;
+        color: var(--text-faint);
+        font-weight: 500;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10.5px;
+        text-align: left;
+      }
+
+      th,
+      td {
+        padding: 9px 11px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+      }
+
+      th {
+        color: var(--text-faint);
+        font-weight: 650;
+      }
+
+      td {
+        color: #cbd1dc;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .typing {
+        display: flex;
+        gap: 5px;
+        padding: 4px 1px;
+      }
+
+      .typing span {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--text-faint);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+
+      .typing span:nth-child(2) { animation-delay: 120ms; }
+      .typing span:nth-child(3) { animation-delay: 240ms; }
+
+      .composer-zone {
+        position: relative;
+        z-index: 5;
+        padding: 12px 24px 20px;
+        background: linear-gradient(to top, var(--canvas) 60%, rgba(7, 9, 13, 0));
+      }
+
+      .composer {
+        width: min(100%, var(--content-width));
+        margin: 0 auto;
+      }
+
+      .composer-box {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 10px 10px 10px 15px;
+        border: 1px solid var(--line-strong);
+        border-radius: 17px;
+        background: rgba(17, 22, 30, 0.94);
+        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .composer-box:focus-within {
+        border-color: rgba(112, 225, 245, 0.35);
+        box-shadow:
+          0 24px 70px rgba(0, 0, 0, 0.4),
+          0 0 0 3px rgba(112, 225, 245, 0.055);
+      }
+
+      #prompt {
+        width: 100%;
+        min-height: 24px;
+        max-height: 130px;
+        resize: none;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 13px;
+        line-height: 24px;
+      }
+
+      #prompt::placeholder {
+        color: #717a88;
+      }
+
+      .send-button {
+        display: grid;
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #071014;
+        box-shadow: 0 8px 22px rgba(112, 225, 245, 0.17);
+        transition: background 160ms ease, opacity 160ms ease, transform 160ms ease;
+      }
+
+      .send-button:hover:not(:disabled) {
+        background: #92ebf8;
+        transform: translateY(-1px);
+      }
+
+      .send-button:disabled {
+        cursor: default;
+        opacity: 0.38;
+      }
+
+      .composer-caption {
+        margin-top: 8px;
+        color: var(--text-faint);
+        font-size: 9.5px;
+        text-align: center;
+      }
+
+      kbd {
+        padding: 1px 4px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.035);
+        font: inherit;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse {
+        0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-3px); }
+      }
+
+      @keyframes message-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @media (max-width: 800px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .mobile-menu {
+          display: grid;
+        }
+
+        .suggestions {
+          grid-template-columns: 1fr;
+          width: min(100%, 400px);
+          margin-right: auto;
+          margin-left: auto;
+        }
+
+        .suggestion {
+          min-height: 72px;
+        }
+
+        .suggestion-icon {
+          float: left;
+          margin: 2px 10px 0 0;
+        }
+      }
+
+      @media (max-width: 540px) {
+        .topbar {
+          height: 58px;
+          padding: 0 14px;
+        }
+
+        .workspace {
+          grid-template-rows: 58px minmax(0, 1fr);
+        }
+
+        .connection-pill {
+          display: none;
+        }
+
+        .empty-state {
+          align-items: flex-start;
+          padding: 54px 18px 24px;
+        }
+
+        .hero {
+          margin-top: 0;
+        }
+
+        .hero-visual {
+          width: 104px;
+          height: 104px;
+          margin-bottom: 19px;
+        }
+
+        .database-visual {
+          width: 68px;
+          height: 68px;
+        }
+
+        .hero h1 {
+          font-size: 30px;
+        }
+
+        .hero-description {
+          font-size: 13px;
+        }
+
+        .suggestions {
+          margin-top: 25px;
+        }
+
+        .messages {
+          padding: 28px 14px 18px;
+        }
+
+        .message-row {
+          margin-bottom: 22px;
+        }
+
+        .assistant .message-bubble {
+          padding: 12px 13px;
+        }
+
+        .composer-zone {
+          padding: 10px 12px 12px;
+        }
+
+        .composer-caption {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="SQL Agent navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+              <ellipse cx="12" cy="5" rx="7" ry="3" stroke="currentColor" stroke-width="1.7" />
+              <path d="M5 5v6c0 1.66 3.13 3 7 3s7-1.34 7-3V5" stroke="currentColor" stroke-width="1.7" />
+              <path d="M5 11v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" stroke="currentColor" stroke-width="1.7" />
+            </svg>
+          </span>
+          <span class="brand-name">SQL Agent</span>
+          <span class="brand-badge">BETA</span>
+        </div>
+
+        <button class="new-chat" id="newChat" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          New conversation
+        </button>
+
+        <section class="sidebar-section" aria-labelledby="connections-label">
+          <p class="sidebar-label" id="connections-label">Connections</p>
+          <button class="side-item" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <ellipse cx="12" cy="5" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
+              <path d="M5 5v6c0 1.66 3.13 3 7 3s7-1.34 7-3V5M5 11v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" stroke="currentColor" stroke-width="1.6" />
+            </svg>
+            Production DB
+            <span class="status-dot" aria-label="Connected"></span>
+          </button>
+        </section>
+
+        <section class="sidebar-section" aria-labelledby="recent-label">
+          <p class="sidebar-label" id="recent-label">Recent</p>
+          <div class="recent-list">
+            <button class="side-item" type="button">Monthly revenue analysis</button>
+            <button class="side-item" type="button">Inactive customer report</button>
+            <button class="side-item" type="button">Order schema overview</button>
+          </div>
+        </section>
+
+        <div class="sidebar-spacer"></div>
+
+        <button class="profile" type="button">
+          <span class="avatar">UA</span>
+          <span class="profile-copy">
+            <strong>Urooj Ahamad</strong>
+            <span>Workspace admin</span>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.3" fill="currentColor" />
+            <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+            <circle cx="19" cy="12" r="1.3" fill="currentColor" />
+          </svg>
+        </button>
+      </aside>
+
+      <section class="workspace" aria-label="Chat workspace">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" type="button" aria-label="Open menu">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="conversation-title">
+            <strong id="headerTitle">New conversation</strong>
+            <span>SQL Agent · Gemini 3.5 Flash Lite</span>
+          </div>
+          <div class="topbar-actions">
+            <div class="connection-pill">
+              <span class="status-dot"></span>
+              Production DB
+            </div>
+            <button class="icon-button" type="button" aria-label="Conversation options">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+                <circle cx="19" cy="12" r="1.4" fill="currentColor" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="chat-stage">
+          <div class="scroll-area" id="scrollArea">
+            <section class="empty-state" id="emptyState" aria-labelledby="welcome-title">
+              <div class="hero">
+                <div class="hero-visual" aria-hidden="true">
+                  <div class="hero-glow"></div>
+                  <div class="orbit"></div>
+                  <div class="database-visual">
+                    <svg width="38" height="38" viewBox="0 0 48 48" fill="none">
+                      <ellipse cx="24" cy="12" rx="13" ry="6" stroke="currentColor" stroke-width="2" />
+                      <path d="M11 12v12c0 3.31 5.82 6 13 6s13-2.69 13-6V12" stroke="currentColor" stroke-width="2" />
+                      <path d="M11 24v12c0 3.31 5.82 6 13 6s13-2.69 13-6V24" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                    <svg class="spark" width="15" height="15" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2c.6 5.7 3.3 8.4 9 9-5.7.6-8.4 3.3-9 9-.6-5.7-3.3-8.4-9-9 5.7-.6 8.4-3.3 9-9Z" fill="currentColor" />
+                    </svg>
+                  </div>
+                </div>
+                <span class="eyebrow">AI-powered database assistant</span>
+                <h1 id="welcome-title">Turn questions into <span class="gradient-text">clear answers.</span></h1>
+                <p class="hero-description">
+                  Ask questions in plain English. SQL Agent explores your schema, writes the query,
+                  and explains the result—without the busywork.
+                </p>
+
+                <div class="suggestions" aria-label="Example questions">
+                  <button class="suggestion" type="button" data-prompt="Show monthly revenue for the last 6 months">
+                    <span class="suggestion-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="m4 16 5-5 4 4 7-8M16 7h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <strong>Analyze revenue</strong>
+                    <span>Show monthly revenue for the last 6 months</span>
+                  </button>
+                  <button class="suggestion" type="button" data-prompt="Find customers who haven't ordered in 90 days">
+                    <span class="suggestion-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7" />
+                        <path d="M3.5 19c.6-3.2 2.4-5 5.5-5 2.1 0 3.6.8 4.5 2.2M17 8v6M14 11h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <strong>Find customer trends</strong>
+                    <span>Find customers inactive for more than 90 days</span>
+                  </button>
+                  <button class="suggestion" type="button" data-prompt="Explain the orders table and how it relates to customers">
+                    <span class="suggestion-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M5 5h5v5H5V5Zm9 9h5v5h-5v-5ZM14 5h5M5 14v5h5M10 7.5h4M16.5 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <strong>Explore your schema</strong>
+                    <span>Explain how orders and customers are related</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="messages" id="messages" aria-live="polite" hidden></section>
+          </div>
+
+          <div class="composer-zone">
+            <form class="composer" id="composer">
+              <div class="composer-box">
+                <textarea
+                  id="prompt"
+                  name="prompt"
+                  rows="1"
+                  aria-label="Ask SQL Agent"
+                  placeholder="Ask a question about your data…"
+                  autocomplete="off"
+                ></textarea>
+                <button class="send-button" id="sendButton" type="submit" aria-label="Send message" disabled>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 19V5m0 0L6.5 10.5M12 5l5.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
+              <div class="composer-caption">Press <kbd>Enter</kbd> to send · SQL Agent can make mistakes, so verify important queries.</div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#composer");
+      const prompt = document.querySelector("#prompt");
+      const sendButton = document.querySelector("#sendButton");
+      const emptyState = document.querySelector("#emptyState");
+      const messages = document.querySelector("#messages");
+      const scrollArea = document.querySelector("#scrollArea");
+      const headerTitle = document.querySelector("#headerTitle");
+      const newChat = document.querySelector("#newChat");
+
+      const icons = {
+        agent: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><ellipse cx="12" cy="6" rx="6.5" ry="2.8" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 6v6c0 1.55 2.91 2.8 6.5 2.8s6.5-1.25 6.5-2.8V6M5.5 12v6c0 1.55 2.91 2.8 6.5 2.8s6.5-1.25 6.5-2.8v-6" stroke="currentColor" stroke-width="1.6"/></svg>`,
+        copy: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.7"/></svg>`,
+      };
+
+      function escapeHtml(value) {
+        return value.replace(/[&<>'"]/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#39;",
+          '"': "&quot;",
+        })[character]);
+      }
+
+      function resizePrompt() {
+        prompt.style.height = "auto";
+        prompt.style.height = `${Math.min(prompt.scrollHeight, 130)}px`;
+        sendButton.disabled = !prompt.value.trim();
+      }
+
+      function scrollToLatest() {
+        requestAnimationFrame(() => {
+          scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: "smooth" });
+        });
+      }
+
+      function addUserMessage(text) {
+        const row = document.createElement("article");
+        row.className = "message-row user";
+        row.innerHTML = `
+          <div class="message-content">
+            <div class="message-meta"><span>Just now</span><strong>You</strong></div>
+            <div class="message-bubble"><p>${escapeHtml(text)}</p></div>
+          </div>`;
+        messages.appendChild(row);
+      }
+
+      function addLoadingMessage() {
+        const row = document.createElement("article");
+        row.className = "message-row assistant";
+        row.id = "loadingMessage";
+        row.innerHTML = `
+          <div class="message-avatar">${icons.agent}</div>
+          <div class="message-content">
+            <div class="message-meta"><strong>SQL Agent</strong><span>Thinking</span></div>
+            <div class="message-bubble">
+              <div class="typing" aria-label="SQL Agent is responding"><span></span><span></span><span></span></div>
+            </div>
+          </div>`;
+        messages.appendChild(row);
+      }
+
+      function addAssistantMessage() {
+        document.querySelector("#loadingMessage")?.remove();
+        const row = document.createElement("article");
+        row.className = "message-row assistant";
+        row.innerHTML = `
+          <div class="message-avatar">${icons.agent}</div>
+          <div class="message-content">
+            <div class="message-meta"><strong>SQL Agent</strong><span>Just now</span></div>
+            <div class="message-bubble">
+              <p>I found the monthly revenue trend. Revenue grew steadily through May, with the strongest month-over-month increase in March.</p>
+              <div class="sql-block">
+                <div class="sql-header">
+                  Generated query
+                  <button class="copy-button" type="button" data-copy>${icons.copy} Copy</button>
+                </div>
+                <pre><code><span class="sql-keyword">SELECT</span>
+  DATE_TRUNC(<span class="sql-string">'month'</span>, <span class="sql-column">created_at</span>) <span class="sql-keyword">AS</span> month,
+  SUM(<span class="sql-column">total_amount</span>) <span class="sql-keyword">AS</span> revenue
+<span class="sql-keyword">FROM</span> orders
+<span class="sql-keyword">WHERE</span> <span class="sql-column">status</span> = <span class="sql-string">'completed'</span>
+<span class="sql-keyword">GROUP BY</span> 1
+<span class="sql-keyword">ORDER BY</span> 1 <span class="sql-keyword">DESC</span>
+<span class="sql-keyword">LIMIT</span> 6;</code></pre>
+              </div>
+              <div class="result-card">
+                <div class="result-head">
+                  <span class="status-dot"></span>
+                  Query results
+                  <span>6 rows · 128 ms</span>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Month</th><th>Revenue</th><th>Growth</th></tr></thead>
+                    <tbody>
+                      <tr><td>May 2026</td><td>$128,420</td><td style="color: var(--success)">+8.4%</td></tr>
+                      <tr><td>Apr 2026</td><td>$118,460</td><td style="color: var(--success)">+5.1%</td></tr>
+                      <tr><td>Mar 2026</td><td>$112,730</td><td style="color: var(--success)">+14.7%</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        messages.appendChild(row);
+        scrollToLatest();
+      }
+
+      function submitMessage(text) {
+        const cleanText = text.trim();
+        if (!cleanText) return;
+
+        emptyState.hidden = true;
+        messages.hidden = false;
+        headerTitle.textContent = cleanText.length > 42 ? `${cleanText.slice(0, 42)}…` : cleanText;
+        addUserMessage(cleanText);
+        addLoadingMessage();
+        prompt.value = "";
+        resizePrompt();
+        scrollToLatest();
+        window.setTimeout(addAssistantMessage, 850);
+      }
+
+      prompt.addEventListener("input", resizePrompt);
+      prompt.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submitMessage(prompt.value);
+      });
+
+      document.querySelectorAll("[data-prompt]").forEach((button) => {
+        button.addEventListener("click", () => submitMessage(button.dataset.prompt));
+      });
+
+      messages.addEventListener("click", async (event) => {
+        const copyButton = event.target.closest("[data-copy]");
+        if (!copyButton) return;
+        const code = copyButton.closest(".sql-block").querySelector("code").textContent;
+        await navigator.clipboard?.writeText(code);
+        copyButton.textContent = "Copied";
+        window.setTimeout(() => { copyButton.innerHTML = `${icons.copy} Copy`; }, 1200);
+      });
+
+      newChat.addEventListener("click", () => {
+        messages.replaceChildren();
+        messages.hidden = true;
+        emptyState.hidden = false;
+        headerTitle.textContent = "New conversation";
+        prompt.value = "";
+        resizePrompt();
+        prompt.focus();
+      });
+
+      resizePrompt();
+    </script>
+  </body>
+</html>

@@ -2,16 +2,36 @@
   "name": "sql-agent",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --import ./tests/register-server-only.mjs --import tsx --test tests/sql-agent-tools.test.ts",
+    "test:database": "node --import ./tests/register-server-only.mjs --import tsx --test tests/database-integration.test.ts",
+    "test:agent": "node --import ./tests/register-server-only.mjs --import tsx database/evaluations/run-agent-evaluations.ts",
+    "db:format": "prisma format",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.43",
+    "@ai-sdk/react": "^4.0.67",
+    "@next/env": "^16.3.0",
+    "@prisma/adapter-neon": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "ai": "^7.0.64",
     "next": "16.3.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -20,7 +40,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }
