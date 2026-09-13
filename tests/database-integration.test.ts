@@ -100,4 +100,31 @@ describe("database query-tool integration", () => {
       },
     ]);
   });
+
+  test("returns the expected September seed totals and top product", async () => {
+    const { getSalesSummaryTool, getTopProductsTool } = await import(
+      "../database/query-tools"
+    );
+    const range = {
+      from: "2026-09-01T00:00:00Z",
+      to: "2026-09-14T00:00:00Z",
+    };
+
+    const [summary, products] = await Promise.all([
+      getSalesSummaryTool(range),
+      getTopProductsTool({ ...range, limit: 1 }),
+    ]);
+
+    assert.deepEqual(summary, [
+      { currency: "USD", units: 210, revenue: "16310.90" },
+    ]);
+    assert.deepEqual(products, [
+      {
+        productName: "Noise-Cancelling Headphones",
+        currency: "USD",
+        units: 15,
+        revenue: "2999.85",
+      },
+    ]);
+  });
 });

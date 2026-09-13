@@ -28,7 +28,7 @@ export const sqlAgentEvaluationCases: SqlAgentEvaluationCase[] = [
     name: "recent sales",
     prompt: "Show the 10 most recent sales.",
     expectedTools: ["listSales"],
-    expectedAnswerPatterns: [/Classic Analog Watch/i, /799\.95/],
+    expectedAnswerPatterns: [/Noise-Cancelling Headphones/i, /999\.95/],
   },
   {
     name: "monthly units",

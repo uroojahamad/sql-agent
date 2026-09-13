@@ -77,7 +77,7 @@ const products = catalog.map(
   }),
 );
 
-const sales = catalog.map(([, , , , , unitPrice], index) => ({
+const augustSales = catalog.map(([, , , , , unitPrice], index) => ({
   id: seedUuid(3, index + 1),
   productId: seedUuid(2, index + 1),
   orderReference: `ORD-2026-${(index + 1).toString().padStart(4, "0")}`,
@@ -87,12 +87,31 @@ const sales = catalog.map(([, , , , , unitPrice], index) => ({
   soldAt: new Date(Date.UTC(2026, 7, index + 1, 10, 0, 0)),
 }));
 
-/**  The main function seeds the database with categories, products, and sales data. 
- * It uses a transaction to ensure that all records are created atomically. 
- * After seeding, it verifies that exactly 30 records exist in each table and logs the results. 
- * If any errors occur during the process, they are caught and logged, and the process exits with an error code. 
- * Finally, the Prisma Client is disconnected to clean up resources. 
-*/
+const septemberSales = Array.from({ length: 70 }, (_, index) => {
+  const productIndex = (index * 7) % catalog.length;
+  const unitPrice = catalog[productIndex][5];
+  const day = Math.floor((index * 13) / 70) + 1;
+  const orderNumber = index + 31;
+
+  return {
+    id: seedUuid(3, orderNumber),
+    productId: seedUuid(2, productIndex + 1),
+    orderReference: `ORD-2026-${orderNumber.toString().padStart(4, "0")}`,
+    quantity: (index % 5) + 1,
+    unitPrice,
+    currency: "USD",
+    soldAt: new Date(
+      Date.UTC(2026, 8, day, 9 + (index % 10), (index * 7) % 60, 0),
+    ),
+  };
+});
+
+const sales = [...augustSales, ...septemberSales];
+
+/**
+ * Seed deterministic category, product, and August/September 2026 sale data.
+ * The transaction and stable IDs make repeated runs atomic and idempotent.
+ */
 async function main() {
   await prisma.$transaction([
     prisma.category.createMany({ data: categories, skipDuplicates: true }),
@@ -106,9 +125,9 @@ async function main() {
     prisma.sale.count(),
   ]);
 
-  if (categoryCount !== 30 || productCount !== 30 || saleCount !== 30) {
+  if (categoryCount !== 30 || productCount !== 30 || saleCount !== 100) {
     throw new Error(
-      `Expected exactly 30 records per table; found categories=${categoryCount}, products=${productCount}, sales=${saleCount}`,
+      `Expected categories=30, products=30, sales=100; found categories=${categoryCount}, products=${productCount}, sales=${saleCount}`,
     );
   }
 
