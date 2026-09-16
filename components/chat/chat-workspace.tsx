@@ -1,18 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { ChatComposer } from "./chat-composer";
-import { ChatHeader } from "./chat-header";
-import { ChatMessages } from "./chat-messages";
-import { ChatSidebar } from "./chat-sidebar";
-import { ChatWelcome } from "./chat-welcome";
+import { useRef, useState } from "react";
+import ChatComposer from "./chat-composer";
+import ChatHeader from "./chat-header";
+import ChatMessages from "./chat-messages";
+import ChatWelcome  from "./chat-welcome";
+import ChatSidebar from "./chat-sidebar";
 import type {
   ChatMessageViewModel,
   ChatPromptOption,
   ChatViewStatus,
   RecentQuery,
 } from "./types";
-import styles from "./chat.module.css";
 
 interface ChatWorkspaceProps {
   title: string;
@@ -28,7 +27,7 @@ interface ChatWorkspaceProps {
   onNewConversation: () => void;
 }
 
-export function ChatWorkspace({
+const ChatWorkspace = ({
   title,
   input,
   status,
@@ -40,8 +39,9 @@ export function ChatWorkspace({
   onStop,
   onRetry,
   onNewConversation,
-}: ChatWorkspaceProps) {
+}: ChatWorkspaceProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const isBusy = status === "submitted" || status === "streaming";
   const lastMessage = messages.at(-1);
   const isWaiting =
@@ -57,11 +57,18 @@ export function ChatWorkspace({
   };
 
   return (
-    <main className={styles.shell}>
+    <main className="grid h-dvh w-full grid-cols-1 overflow-hidden bg-[radial-gradient(circle_at_62%_-18%,rgba(112,225,245,0.07),transparent_34%),radial-gradient(circle_at_105%_62%,rgba(155,138,251,0.05),transparent_32%),#07090d] text-agent-text min-[801px]:grid-cols-[264px_minmax(0,1fr)]">
       <ChatSidebar
         isOpen={isSidebarOpen}
         recentQueries={recentQueries}
         onClose={() => setIsSidebarOpen(false)}
+        onDrawerVisibilityChange={(open) => {
+          if (!open) {
+            window.requestAnimationFrame(() => {
+              menuButtonRef.current?.focus({ preventScroll: true });
+            });
+          }
+        }}
         onNewConversation={() => {
           setIsSidebarOpen(false);
           onNewConversation();
@@ -69,12 +76,22 @@ export function ChatWorkspace({
         onPromptSelect={handlePromptSelect}
       />
 
-      <section className={styles.workspace} aria-label="Chat workspace">
-        <ChatHeader title={title} onOpenMenu={() => setIsSidebarOpen(true)} />
-        <div className={styles.chatStage}>
+      <section
+        className="grid min-h-0 min-w-0 grid-rows-[58px_minmax(0,1fr)] min-[541px]:grid-rows-[64px_minmax(0,1fr)]"
+        aria-label="Chat workspace"
+      >
+        <ChatHeader
+          title={title}
+          menuButtonRef={menuButtonRef}
+          onOpenMenu={() => setIsSidebarOpen(true)}
+        />
+        <div className="relative grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto]">
           {messages.length === 0 ? (
-            <div className={styles.scrollArea}>
-              <ChatWelcome suggestions={suggestions} onPromptSelect={handlePromptSelect} />
+            <div className="min-h-0 min-w-0 w-full overflow-y-auto overscroll-contain [scrollbar-color:rgba(255,255,255,0.14)_transparent] [scrollbar-width:thin]">
+              <ChatWelcome
+                suggestions={suggestions}
+                onPromptSelect={handlePromptSelect}
+              />
             </div>
           ) : (
             <ChatMessages
@@ -96,3 +113,5 @@ export function ChatWorkspace({
     </main>
   );
 }
+
+export default ChatWorkspace;

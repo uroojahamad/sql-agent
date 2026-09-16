@@ -1,4 +1,4 @@
-export { ChatWorkspace } from "./chat-workspace";
+export { default as ChatWorkspace } from "./chat-workspace";
 export type {
   ChatMessageViewModel,
   ChatPromptOption,
