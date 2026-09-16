@@ -3,7 +3,7 @@ interface IconProps {
   className?: string;
 }
 
-export function DatabaseIcon({ size = 20, className }: IconProps) {
+export const DatabaseIcon = ({ size = 20, className }: IconProps) => {
   return (
     <svg
       aria-hidden="true"
@@ -21,33 +21,33 @@ export function DatabaseIcon({ size = 20, className }: IconProps) {
       />
     </svg>
   );
-}
+};
 
-export function PlusIcon({ size = 16 }: IconProps) {
+export const PlusIcon = ({ size = 16 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
-}
+};
 
-export function MenuIcon({ size = 17 }: IconProps) {
+export const MenuIcon = ({ size = 17 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
-}
+};
 
-export function CloseIcon({ size = 17 }: IconProps) {
+export const CloseIcon = ({ size = 17 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
-}
+};
 
-export function MoreIcon({ size = 16 }: IconProps) {
+export const MoreIcon = ({ size = 16 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="5" cy="12" r="1.35" fill="currentColor" />
@@ -55,9 +55,9 @@ export function MoreIcon({ size = 16 }: IconProps) {
       <circle cx="19" cy="12" r="1.35" fill="currentColor" />
     </svg>
   );
-}
+};
 
-export function SendIcon({ size = 17 }: IconProps) {
+export const SendIcon = ({ size = 17 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path
@@ -69,53 +69,53 @@ export function SendIcon({ size = 17 }: IconProps) {
       />
     </svg>
   );
-}
+};
 
-export function StopIcon({ size = 14 }: IconProps) {
+export const StopIcon = ({ size = 14 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
     </svg>
   );
-}
+};
 
-export function SparkIcon({ size = 15, className }: IconProps) {
+export const SparkIcon = ({ size = 15, className }: IconProps) => {
   return (
     <svg aria-hidden="true" className={className} width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M12 2c.6 5.7 3.3 8.4 9 9-5.7.6-8.4 3.3-9 9-.6-5.7-3.3-8.4-9-9 5.7-.6 8.4-3.3 9-9Z" fill="currentColor" />
     </svg>
   );
-}
+};
 
-export function ChartIcon({ size = 14 }: IconProps) {
+export const ChartIcon = ({ size = 14 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="m4 16 5-5 4 4 7-8M16 7h4v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+};
 
-export function SearchIcon({ size = 14 }: IconProps) {
+export const SearchIcon = ({ size = 14 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="10.5" cy="10.5" r="5.5" stroke="currentColor" strokeWidth="1.7" />
       <path d="m15 15 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
-}
+};
 
-export function SalesIcon({ size = 14 }: IconProps) {
+export const SalesIcon = ({ size = 14 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M5 5h5v5H5V5Zm9 9h5v5h-5v-5ZM14 5h5M5 14v5h5M10 7.5h4M16.5 10v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+};
 
-export function RetryIcon({ size = 14 }: IconProps) {
+export const RetryIcon = ({ size = 14 }: IconProps) => {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M19 8a8 8 0 1 0 1 7M19 4v4h-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+};

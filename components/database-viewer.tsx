@@ -54,22 +54,22 @@ const tabs: Array<{ key: DatabaseTab; label: string }> = [
   { key: "sales", label: "Sales" },
 ];
 
-function formatMoney(amount: string | number, currency: string) {
+const formatMoney = (amount: string | number, currency: string) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
   }).format(Number(amount));
-}
+};
 
-function formatDate(value: string) {
+const formatDate = (value: string) => {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Asia/Kolkata",
   }).format(new Date(value));
-}
+};
 
-function RecordId({ value }: { value: string }) {
+const RecordId = ({ value }: { value: string }) => {
   return (
     <Tooltip title={value}>
       <code className="rounded-md bg-white/6 px-2 py-1 font-mono text-xs text-agent-soft">
@@ -77,7 +77,7 @@ function RecordId({ value }: { value: string }) {
       </code>
     </Tooltip>
   );
-}
+};
 
 const categoryColumns: TableColumnsType<CategoryTableRow> = [
   {
@@ -245,7 +245,7 @@ const tableLocale = {
   ),
 };
 
-export function DatabaseViewer(props: DatabaseViewerProps) {
+export const DatabaseViewer = (props: DatabaseViewerProps) => {
   const router = useRouter();
   const pagination =
     props.rows.length > 15
@@ -322,4 +322,4 @@ export function DatabaseViewer(props: DatabaseViewerProps) {
       </div>
     </main>
   );
-}
+};

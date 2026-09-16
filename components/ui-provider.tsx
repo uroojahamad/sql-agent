@@ -56,6 +56,6 @@ const theme: ThemeConfig = {
   },
 };
 
-export function UIProvider({ children }: { children: React.ReactNode }) {
+export const UIProvider = ({ children }: { children: React.ReactNode }) => {
   return <ConfigProvider theme={theme}>{children}</ConfigProvider>;
-}
+};

@@ -43,12 +43,10 @@ export type ChatRateLimitDecision =
       retryAfterSeconds: number;
     };
 
-export class RateLimitServiceError extends Error {
-  constructor(options?: ErrorOptions) {
-    super("Rate-limit service is unavailable.", options);
-    this.name = "RateLimitServiceError";
-  }
-}
+export const createRateLimitServiceError = (options?: ErrorOptions) =>
+  Object.assign(new Error("Rate-limit service is unavailable.", options), {
+    name: "RateLimitServiceError",
+  });
 
 const readPositiveInteger = (value: string | undefined, fallback: number) => {
   if (!value) return fallback;
@@ -110,7 +108,7 @@ const checkLimit = async (
     return result;
   } catch (error) {
     logRateLimit(requestId, type, "error", undefined, error);
-    throw new RateLimitServiceError({ cause: error });
+    throw createRateLimitServiceError({ cause: error });
   }
 };
 

@@ -4,12 +4,11 @@ import { Redis } from "@upstash/redis";
 
 let redisClient: Redis | undefined;
 
-export class RateLimitConfigurationError extends Error {
-  constructor() {
-    super("Rate-limit service configuration is unavailable.");
-    this.name = "RateLimitConfigurationError";
-  }
-}
+export const createRateLimitConfigurationError = () =>
+  Object.assign(
+    new Error("Rate-limit service configuration is unavailable."),
+    { name: "RateLimitConfigurationError" },
+  );
 
 export const getRateLimitRedisClient = () => {
   if (redisClient) return redisClient;
@@ -18,7 +17,7 @@ export const getRateLimitRedisClient = () => {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
   if (!url || !token) {
-    throw new RateLimitConfigurationError();
+    throw createRateLimitConfigurationError();
   }
 
   redisClient = new Redis({ url, token });

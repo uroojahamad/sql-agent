@@ -1,9 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { getToolName, isToolUIPart } from "ai";
+import { getToolName, isToolUIPart, type UIMessage } from "ai";
 import { useMemo, useState } from "react";
 import { getFriendlyChatError } from "@/components/chat/chat-errors";
+import { createChatRequestCoordinator } from "@/components/chat/chat-request-coordinator";
 import {
   ChatWorkspace,
   type ChatMessageViewModel,
@@ -64,8 +65,11 @@ const toolRowCount = (output: unknown) => {
   return undefined;
 };
 
-export default function Chat() {
+const Chat = () => {
   const [input, setInput] = useState("");
+  const [requestCoordinator] = useState(
+    () => createChatRequestCoordinator<UIMessage[]>(),
+  );
   const {
     messages,
     sendMessage,
@@ -117,10 +121,38 @@ export default function Chat() {
 
   const sendPrompt = (prompt = input) => {
     const cleanPrompt = prompt.trim();
-    if (!cleanPrompt || status !== "ready") return;
+    if (
+      !cleanPrompt ||
+      status !== "ready" ||
+      requestCoordinator.hasActiveRequest()
+    ) {
+      return;
+    }
 
+    const started = requestCoordinator.start(messages.slice(), () =>
+      sendMessage({ text: cleanPrompt }),
+    );
+
+    if (started) setInput("");
+  };
+
+  const stopActiveTurn = () =>
+    requestCoordinator.cancel(stop, (rollbackMessages) => {
+      clearError();
+      setMessages(rollbackMessages);
+    });
+
+  const retryLastTurn = () => {
+    if (requestCoordinator.hasActiveRequest()) return;
+
+    requestCoordinator.start(messages.slice(), () => regenerate());
+  };
+
+  const startNewConversation = async () => {
+    await requestCoordinator.cancel(stop, () => undefined);
+    clearError();
+    setMessages([]);
     setInput("");
-    void sendMessage({ text: cleanPrompt });
   };
 
   return (
@@ -134,14 +166,11 @@ export default function Chat() {
       recentQueries={recentQueries}
       onInputChange={setInput}
       onSend={sendPrompt}
-      onStop={() => void stop()}
-      onRetry={() => void regenerate()}
-      onNewConversation={() => {
-        if (status === "submitted" || status === "streaming") void stop();
-        clearError();
-        setMessages([]);
-        setInput("");
-      }}
+      onStop={() => void stopActiveTurn()}
+      onRetry={retryLastTurn}
+      onNewConversation={() => void startNewConversation()}
     />
   );
-}
+};
+
+export default Chat;

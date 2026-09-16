@@ -112,7 +112,7 @@ const sales = [...augustSales, ...septemberSales];
  * Seed deterministic category, product, and August/September 2026 sale data.
  * The transaction and stable IDs make repeated runs atomic and idempotent.
  */
-async function main() {
+const main = async () => {
   await prisma.$transaction([
     prisma.category.createMany({ data: categories, skipDuplicates: true }),
     prisma.product.createMany({ data: products, skipDuplicates: true }),
@@ -134,7 +134,7 @@ async function main() {
   console.log(
     `Seed complete: categories=${categoryCount}, products=${productCount}, sales=${saleCount}`,
   );
-}
+};
 
 main()
   .catch((error: unknown) => {

@@ -21,12 +21,12 @@ interface DatabasePageProps {
   }>;
 }
 
-function parseTab(value: string | string[] | undefined): DatabaseTab {
+const parseTab = (value: string | string[] | undefined): DatabaseTab => {
   const tab = Array.isArray(value) ? value[0] : value;
   return tab === "products" || tab === "sales" ? tab : "categories";
-}
+};
 
-export default async function DatabasePage({ searchParams }: DatabasePageProps) {
+const DatabasePage = async ({ searchParams }: DatabasePageProps) => {
   const { tab } = await searchParams;
   const activeTab = parseTab(tab);
 
@@ -79,4 +79,6 @@ export default async function DatabasePage({ searchParams }: DatabasePageProps) 
   }));
 
   return <DatabaseViewer activeTab="categories" rows={rows} />;
-}
+};
+
+export default DatabasePage;

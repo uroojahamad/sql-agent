@@ -1149,7 +1149,7 @@
         copy: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.7"/></svg>`,
       };
 
-      function escapeHtml(value) {
+      const escapeHtml = (value) => {
         return value.replace(/[&<>'"]/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
@@ -1157,21 +1157,21 @@
           "'": "&#39;",
           '"': "&quot;",
         })[character]);
-      }
+      };
 
-      function resizePrompt() {
+      const resizePrompt = () => {
         prompt.style.height = "auto";
         prompt.style.height = `${Math.min(prompt.scrollHeight, 130)}px`;
         sendButton.disabled = !prompt.value.trim();
-      }
+      };
 
-      function scrollToLatest() {
+      const scrollToLatest = () => {
         requestAnimationFrame(() => {
           scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: "smooth" });
         });
-      }
+      };
 
-      function addUserMessage(text) {
+      const addUserMessage = (text) => {
         const row = document.createElement("article");
         row.className = "message-row user";
         row.innerHTML = `
@@ -1180,9 +1180,9 @@
             <div class="message-bubble"><p>${escapeHtml(text)}</p></div>
           </div>`;
         messages.appendChild(row);
-      }
+      };
 
-      function addLoadingMessage() {
+      const addLoadingMessage = () => {
         const row = document.createElement("article");
         row.className = "message-row assistant";
         row.id = "loadingMessage";
@@ -1195,9 +1195,9 @@
             </div>
           </div>`;
         messages.appendChild(row);
-      }
+      };
 
-      function addAssistantMessage() {
+      const addAssistantMessage = () => {
         document.querySelector("#loadingMessage")?.remove();
         const row = document.createElement("article");
         row.className = "message-row assistant";
@@ -1242,9 +1242,9 @@
           </div>`;
         messages.appendChild(row);
         scrollToLatest();
-      }
+      };
 
-      function submitMessage(text) {
+      const submitMessage = (text) => {
         const cleanText = text.trim();
         if (!cleanText) return;
 
@@ -1257,7 +1257,7 @@
         resizePrompt();
         scrollToLatest();
         window.setTimeout(addAssistantMessage, 850);
-      }
+      };
 
       prompt.addEventListener("input", resizePrompt);
       prompt.addEventListener("keydown", (event) => {
