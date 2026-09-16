@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import ChatComposer from "./chat-composer";
 import ChatHeader from "./chat-header";
 import ChatMessages from "./chat-messages";
-import ChatWelcome  from "./chat-welcome";
+import ChatWelcome from "./chat-welcome";
 import ChatSidebar from "./chat-sidebar";
 import type {
   ChatMessageViewModel,
@@ -17,6 +17,7 @@ interface ChatWorkspaceProps {
   title: string;
   input: string;
   status: ChatViewStatus;
+  errorMessage: string;
   messages: ChatMessageViewModel[];
   suggestions: ChatPromptOption[];
   recentQueries: RecentQuery[];
@@ -31,6 +32,7 @@ const ChatWorkspace = ({
   title,
   input,
   status,
+  errorMessage,
   messages,
   suggestions,
   recentQueries,
@@ -98,6 +100,7 @@ const ChatWorkspace = ({
               messages={messages}
               isWaiting={isWaiting}
               hasError={status === "error"}
+              errorMessage={errorMessage}
               onRetry={onRetry}
             />
           )}

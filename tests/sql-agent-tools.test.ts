@@ -219,7 +219,7 @@ describe("SQL agent tool contracts", () => {
     assert.equal(emptyResponse.status, 400);
     assert.equal(systemResponse.status, 400);
     assert.equal(
-      (await systemResponse.json()).error,
+      (await systemResponse.json()).error.message,
       "System messages are not accepted from clients.",
     );
   });

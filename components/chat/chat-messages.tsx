@@ -9,6 +9,7 @@ interface ChatMessagesProps {
   messages: ChatMessageViewModel[];
   isWaiting: boolean;
   hasError: boolean;
+  errorMessage: string;
   onRetry: () => void;
 }
 
@@ -191,7 +192,13 @@ const TypingMessage = () => {
   );
 }
 
-const ChatMessages = ({ messages, isWaiting, hasError, onRetry }: ChatMessagesProps) => {
+const ChatMessages = ({
+  messages,
+  isWaiting,
+  hasError,
+  errorMessage,
+  onRetry,
+}: ChatMessagesProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -220,7 +227,7 @@ const ChatMessages = ({ messages, isWaiting, hasError, onRetry }: ChatMessagesPr
             type="error"
             showIcon
             className="!mt-1 !mb-6 min-[541px]:!ml-[41px]"
-            message="Something went wrong while generating the response."
+            message={errorMessage}
             action={
               <Button size="small" icon={<RetryIcon />} onClick={onRetry}>
                 Try again

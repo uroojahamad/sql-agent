@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --import ./tests/register-server-only.mjs --import tsx --test tests/sql-agent-tools.test.ts",
+    "test:protection": "node --import ./tests/register-server-only.mjs --import tsx --test tests/api-protection.test.ts",
     "test:database": "node --import ./tests/register-server-only.mjs --import tsx --test tests/database-integration.test.ts",
     "test:agent": "node --import ./tests/register-server-only.mjs --import tsx database/evaluations/run-agent-evaluations.ts",
     "db:format": "prisma format",
@@ -25,12 +26,14 @@
     "@ai-sdk/google": "^4.0.43",
     "@ai-sdk/react": "^4.0.67",
     "@ant-design/nextjs-registry": "^1.3.0",
-    "@next/env": "^16.3.0",
+    "@next/env": "^16.3.5",
     "@prisma/adapter-neon": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@upstash/ratelimit": "^2.1.0",
+    "@upstash/redis": "^1.38.4",
     "ai": "^7.0.64",
     "antd": "^6.6.4",
-    "next": "16.3.0",
+    "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.4.3"
@@ -41,10 +44,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "16.3.5",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "mysql2": "3.24.4"
   }
 }

@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { getToolName, isToolUIPart } from "ai";
 import { useMemo, useState } from "react";
+import { getFriendlyChatError } from "@/components/chat/chat-errors";
 import {
   ChatWorkspace,
   type ChatMessageViewModel,
@@ -73,6 +74,7 @@ export default function Chat() {
     stop,
     regenerate,
     clearError,
+    error,
   } = useChat();
 
   const viewMessages = useMemo<ChatMessageViewModel[]>(
@@ -126,6 +128,7 @@ export default function Chat() {
       title={title}
       input={input}
       status={status}
+      errorMessage={getFriendlyChatError(error)}
       messages={viewMessages}
       suggestions={suggestions}
       recentQueries={recentQueries}

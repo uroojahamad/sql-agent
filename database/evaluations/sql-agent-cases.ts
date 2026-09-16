@@ -10,7 +10,7 @@ export const sqlAgentEvaluationCases: SqlAgentEvaluationCase[] = [
     name: "category listing",
     prompt: "What categories do we have?",
     expectedTools: ["listCategories"],
-    expectedAnswerPatterns: [/30/, /Audio/i],
+    expectedAnswerPatterns: [/Audio/i, /Watches/i],
   },
   {
     name: "product search",
