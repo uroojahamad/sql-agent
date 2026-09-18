@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import nextEnv from "@next/env";
+import { APICallError } from "ai";
 import type { SqlAgentTools } from "../database/ai-tools";
 import {
   checkChatRateLimitWithClients,
@@ -252,6 +253,57 @@ test("a limiter infrastructure failure fails closed before tools or Gemini", asy
   assert.equal(response.status, 503);
   assert.equal(error.code, "RATE_LIMIT_SERVICE_UNAVAILABLE");
   assert.deepEqual(calls, { tools: 0, model: 0 });
+});
+
+test("a pre-stream Gemini quota failure returns a safe normalized response", async () => {
+  const handleChatRequest = await getHandleChatRequest();
+  const { calls, dependencies } = createProtectedDependencies(
+    async () => allowedDecision,
+  );
+  dependencies.runAgent = async () => {
+    calls.model += 1;
+    throw new APICallError({
+      message: "raw quota error containing secret-token",
+      url: "https://generativelanguage.googleapis.com/test",
+      requestBodyValues: { sensitive: "request-data" },
+      statusCode: 429,
+      responseHeaders: { "retry-after": "30" },
+      responseBody: "raw response containing secret-token",
+      data: {
+        error: {
+          code: 429,
+          status: "RESOURCE_EXHAUSTED",
+          details: [
+            {
+              "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+              violations: [
+                {
+                  quotaId:
+                    "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+  };
+
+  const response = await handleChatRequest(
+    createRequest([textMessage("user", "Show revenue")]),
+    dependencies,
+  );
+  const responseText = await response.text();
+  const body = JSON.parse(responseText) as {
+    error: { code: string; message: string; retryAfterSeconds?: number };
+  };
+
+  assert.equal(response.status, 429);
+  assert.equal(body.error.code, "AI_DAILY_QUOTA_EXCEEDED");
+  assert.equal(body.error.retryAfterSeconds, 30);
+  assert.equal(response.headers.get("Retry-After"), "30");
+  assert.equal(responseText.includes("secret-token"), false);
+  assert.deepEqual(calls, { tools: 1, model: 1 });
 });
 
 test("client identity trusts Vercel forwarding headers only on Vercel", () => {

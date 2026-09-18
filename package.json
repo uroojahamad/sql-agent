@@ -11,7 +11,7 @@
     "lint": "eslint",
     "test": "node --import ./tests/register-server-only.mjs --import tsx --test tests/sql-agent-tools.test.ts",
     "test:chat": "node --import tsx --test tests/chat-request-coordinator.test.ts",
-    "test:protection": "node --import ./tests/register-server-only.mjs --import tsx --test tests/api-protection.test.ts",
+    "test:protection": "node --import ./tests/register-server-only.mjs --import tsx --test tests/api-protection.test.ts tests/provider-errors.test.ts",
     "test:database": "node --import ./tests/register-server-only.mjs --import tsx --test tests/database-integration.test.ts",
     "test:agent": "node --import ./tests/register-server-only.mjs --import tsx database/evaluations/run-agent-evaluations.ts",
     "db:format": "prisma format",

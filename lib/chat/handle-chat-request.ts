@@ -10,6 +10,7 @@ import {
   streamText,
   toUIMessageStream,
   type UIMessage,
+  wrapLanguageModel,
 } from "ai";
 import {
   createSqlAgentTools,
@@ -22,6 +23,15 @@ import {
 } from "@/lib/rate-limit/chat-rate-limit";
 import { getRateLimitIdentifier } from "@/lib/rate-limit/identifier";
 import {
+  classifyProviderError,
+  createGeminiErrorMiddleware,
+  createProviderStreamTransform,
+  getProviderErrorHeaders,
+  serializeProviderError,
+  type AIProviderError,
+  type AIProviderErrorCode,
+} from "@/lib/ai/provider-errors";
+import {
   validateBasicChatRequest,
   validateChatRequestSize,
 } from "./request-validation";
@@ -30,6 +40,7 @@ const SAFE_STREAM_ERROR =
   "I couldn't complete that request right now. Please try again.";
 const RATE_LIMIT_SERVICE_ERROR =
   "The AI service is temporarily unavailable. Please try again shortly.";
+const GEMINI_MODEL_ID = "gemini-3.5-flash-lite";
 
 type SqlAgentUIMessage = UIMessage<
   unknown,
@@ -62,7 +73,8 @@ interface ApiErrorBody {
     | "RATE_LIMIT_EXCEEDED"
     | "DAILY_LIMIT_EXCEEDED"
     | "RATE_LIMIT_SERVICE_UNAVAILABLE"
-    | "INTERNAL_ERROR";
+    | "INTERNAL_ERROR"
+    | AIProviderErrorCode;
   message: string;
   retryAfterSeconds?: number;
 }
@@ -94,27 +106,61 @@ const logRouteError = (requestId: string, errorCategory: string) => {
   });
 };
 
+const logProviderError = (
+  requestId: string,
+  providerError: AIProviderError,
+) => {
+  const logData = {
+    requestId,
+    status:
+      providerError.code === "AI_REQUEST_CANCELLED" ? "cancelled" : "error",
+    errorCategory: providerError.category,
+    providerStatus: providerError.providerStatus,
+    model: GEMINI_MODEL_ID,
+    retryAfterSeconds: providerError.retryAfterSeconds,
+    timestamp: new Date().toISOString(),
+  };
+
+  if (providerError.code === "AI_REQUEST_CANCELLED") {
+    console.info("[sql-agent:provider]", logData);
+  } else {
+    console.error("[sql-agent:provider]", logData);
+  }
+};
+
 const runSqlAgent = async ({
   request,
   requestId,
   messages,
   tools,
 }: RunAgentOptions) => {
+  const model = wrapLanguageModel({
+    model: google(GEMINI_MODEL_ID),
+    middleware: createGeminiErrorMiddleware(),
+  });
   const result = streamText({
-    model: google("gemini-3.5-flash-lite"),
+    model,
     instructions: createSqlAgentSystemPrompt(),
     messages: await convertToModelMessages(messages, { tools }),
     tools,
     stopWhen: isStepCount(5),
     abortSignal: request.signal,
-    onError: () => logRouteError(requestId, "model_stream_failed"),
+    onError: () => undefined,
   });
+
+  const providerAwareStream = result.stream.pipeThrough(
+    createProviderStreamTransform<SqlAgentTools>(),
+  );
 
   return createUIMessageStreamResponse({
     headers: baseHeaders(requestId),
     stream: toUIMessageStream({
-      stream: result.stream,
-      onError: () => SAFE_STREAM_ERROR,
+      stream: providerAwareStream,
+      onError: (error) => {
+        const providerError = classifyProviderError(error);
+        logProviderError(requestId, providerError);
+        return serializeProviderError(providerError);
+      },
     }),
   });
 };
@@ -200,8 +246,8 @@ export const handleChatRequest = async (
           ? "RATE_LIMIT_EXCEEDED"
           : "DAILY_LIMIT_EXCEEDED",
         message: isBurstLimit
-          ? "Too many requests. Please wait a moment before asking another question."
-          : "You've reached today's AI demo limit. Please try again tomorrow.",
+          ? "Too many requests. Please wait a moment and try again."
+          : "You've reached today's demo usage limit. Please try again tomorrow.",
         retryAfterSeconds: rateLimitDecision.retryAfterSeconds,
       },
       requestId,
@@ -262,12 +308,18 @@ export const handleChatRequest = async (
       messages: validatedMessages.data,
       tools,
     });
-  } catch {
-    logRouteError(requestId, "request_orchestration_failed");
+  } catch (error) {
+    const providerError = classifyProviderError(error);
+    logProviderError(requestId, providerError);
     return errorResponse(
-      500,
-      { code: "INTERNAL_ERROR", message: SAFE_STREAM_ERROR },
+      providerError.status,
+      {
+        code: providerError.code,
+        message: providerError.message,
+        retryAfterSeconds: providerError.retryAfterSeconds,
+      },
       requestId,
+      getProviderErrorHeaders(providerError),
     );
   }
 };
